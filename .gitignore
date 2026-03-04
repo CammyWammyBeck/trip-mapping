@@ -3,3 +3,11 @@ dist/
 *.db
 .env
 .env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+venv/
+.venv/
