@@ -1,82 +1,201 @@
 # Trip Planner
 
-A web app for planning holiday trips. Search for landmarks and locations with autocomplete, save them to organized trips, view them on an interactive map with route lines, and add personal notes.
+A web app for planning holiday trips — and the foundation for a social platform where travellers share, discover, and remix each other's itineraries.
+
+Search for landmarks and locations with autocomplete, save them to organised trips, view them on an interactive map with route lines, and add personal notes.
+
+---
+
+## Vision
+
+Most travel planning apps are private by default — you plan alone, maybe share a link, and that's it. This project is being built toward something more ambitious: **a social platform built around itineraries**, where trips are living documents you can discover, comment on, and fork into your own.
+
+The approach is deliberate: **nail the core planning experience first**, so that when the social layer arrives, there's genuine value to share.
+
+### Phase 1 — Core Product *(current focus)*
+Build a fast, frictionless trip planner that users love on its own merits.
+
+### Phase 2 — Social Layer
+Add the features that turn individual trips into a community: public profiles, social feeds, forking, commenting, and discovery.
+
+---
 
 ## Features
 
+### Phase 1 (Core)
+
 - **Place search** with Google Places Autocomplete — suggestions appear as you type
-- **Interactive map** showing all saved locations as labeled pins
+- **Interactive map** showing all saved locations as labelled pins
 - **Trip management** — create, switch between, and delete multiple trips
-- **Day grouping** — organize places into Day 1, Day 2, etc.
-- **Route visualization** — colored polylines connecting places within each day group
+- **Day grouping** — organise places into Day 1, Day 2, etc.
+- **Route visualisation** — coloured polylines connecting places within each day group
 - **Notes** — add personal notes to any saved location
-- **Persistent storage** — all data saved to a SQLite database via REST API
+- **Persistent storage** — all data saved to PostgreSQL via REST API
+- **Shareable read-only links** — generate a public URL so anyone can view your trip without an account
+- **Trip density estimates** — surface approximate travel + visit time per day based on Google Directions data
+- **Smart day warnings** — flag days where the route backtracks badly based on geographic spread
+
+### Phase 2 (Social — Planned)
+
+- **User accounts & profiles** — public profile pages showing a user's published trips
+- **Trip forking** — copy any public trip as your own editable starting point, with attribution back to the original
+- **Social feed** — a home feed showing recent trips and activity from people you follow
+- **Following** — follow other travellers and curators
+- **Commenting** — leave tips, questions, or feedback on any published trip
+- **Community discovery** — browse and search public trips by destination, trip length, travel style, or season
+- **Group voting** — when planning with others, vote on saved places so the itinerary reflects everyone's preferences
+
+---
 
 ## Tech Stack
 
 | Layer | Tech |
 |-------|------|
-| Frontend | React 18 + TypeScript, Vite |
-| Maps | Google Maps via `@vis.gl/react-google-maps` |
-| Backend | Node.js + Express + TypeScript |
-| Database | SQLite via `better-sqlite3` |
+| Frontend | React 18 + TypeScript + Vite |
+| Maps | `@vis.gl/react-google-maps` |
+| Backend | Python + FastAPI |
+| Validation | Pydantic v2 |
+| Database | PostgreSQL (via Supabase) |
+| ORM | SQLAlchemy 2.0 (async) |
+| Migrations | Alembic |
+| Auth | Supabase Auth |
+| Frontend deployment | Vercel |
+| Backend deployment | Heroku |
+
+**Why this stack?** The frontend stays in React because the interactive map experience fundamentally requires it — Google Maps runs in the browser and real-time pin/route updates are a client-side concern. The backend is FastAPI because Pydantic validation, async support, and auto-generated OpenAPI docs make it the best modern Python API framework. PostgreSQL via Supabase is used from day one (rather than SQLite) because the social features in Phase 2 require a real relational database with auth, and migrating later is unnecessary pain.
+
+---
 
 ## Prerequisites
 
-- Node.js 18+
+- Node.js 18+ (frontend only)
+- Python 3.11+
+- A [Supabase](https://supabase.com) project (free tier is sufficient)
 - A Google Cloud API key with these APIs enabled:
   - Maps JavaScript API
   - Places API
-  - Directions API (optional, for future route features)
+  - Directions API (used for route time estimates)
+
+---
 
 ## Getting Started
 
-1. **Clone and install dependencies:**
-
+1. **Install frontend dependencies:**
    ```bash
-   npm install
    cd client && npm install
-   cd ../server && npm install
-   cd ..
    ```
 
-2. **Add your Google Maps API key:**
+2. **Install backend dependencies:**
+   ```bash
+   cd server
+   python -m venv venv
+   source venv/bin/activate  # Windows: venv\Scripts\activate
+   pip install -r requirements.txt
+   ```
+
+3. **Configure environment variables:**
 
    Create `client/.env`:
    ```
    VITE_GOOGLE_MAPS_API_KEY=your_api_key_here
+   VITE_API_URL=http://localhost:8000
    ```
 
-3. **Run the dev server:**
+   Create `server/.env`:
+   ```
+   SUPABASE_URL=your_supabase_project_url
+   SUPABASE_SERVICE_KEY=your_supabase_service_key
+   DATABASE_URL=your_supabase_postgres_connection_string
+   GOOGLE_MAPS_API_KEY=your_api_key_here
+   ```
 
+4. **Run database migrations:**
    ```bash
-   npm run dev
+   cd server
+   alembic upgrade head
    ```
 
-   This starts both the frontend (http://localhost:5173) and backend (http://localhost:3001) concurrently.
+5. **Run the dev servers:**
+
+   Backend (http://localhost:8000):
+   ```bash
+   cd server && uvicorn main:app --reload
+   ```
+
+   Frontend (http://localhost:5173):
+   ```bash
+   cd client && npm run dev
+   ```
+
+   API docs are available at http://localhost:8000/docs (auto-generated by FastAPI).
+
+---
 
 ## Project Structure
 
 ```
 trip-mapping/
-├── client/                 # React frontend (Vite)
+├── client/                     # React frontend (Vite)
 │   └── src/
-│       ├── App.tsx         # Main layout + state
-│       ├── api.ts          # Backend API client
-│       ├── types.ts        # TypeScript interfaces
-│       ├── hooks/          # useTrips, usePlaces
+│       ├── App.tsx             # Main layout + state
+│       ├── api.ts              # Backend API client
+│       ├── types.ts            # TypeScript interfaces
+│       ├── hooks/              # useTrips, usePlaces
 │       └── components/
-│           ├── Sidebar/    # TripSelector, PlaceSearch, PlaceList
-│           ├── Map/        # MapView with pins + routes
-│           └── PlaceCard/  # Individual place card with notes
-├── server/                 # Express backend
-│   └── src/
-│       ├── index.ts        # Express server entry
-│       ├── db.ts           # SQLite setup
-│       └── routes/         # trips.ts, places.ts
+│           ├── Sidebar/        # TripSelector, PlaceSearch, PlaceList
+│           ├── Map/            # MapView with pins + routes
+│           └── PlaceCard/      # Individual place card with notes
+├── server/                     # FastAPI backend
+│   ├── main.py                 # FastAPI app entry point
+│   ├── database.py             # SQLAlchemy async engine + session
+│   ├── models/                 # SQLAlchemy ORM models
+│   ├── schemas/                # Pydantic request/response schemas
+│   ├── routers/                # trips.py, places.py, auth.py
+│   ├── alembic/                # Database migrations
+│   │   └── versions/
+│   ├── alembic.ini
+│   └── requirements.txt
 ```
 
-## API Endpoints
+---
+
+## Deploying to Heroku
+
+1. **Install the [Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli) and log in:**
+   ```bash
+   heroku login
+   ```
+
+2. **Create a Heroku app:**
+   ```bash
+   heroku create your-app-name
+   ```
+
+3. **Add a `Procfile` to the `server/` directory:**
+   ```
+   web: uvicorn main:app --host 0.0.0.0 --port $PORT
+   ```
+
+4. **Set environment variables:**
+   ```bash
+   heroku config:set SUPABASE_URL=your_supabase_project_url
+   heroku config:set SUPABASE_SERVICE_KEY=your_supabase_service_key
+   heroku config:set DATABASE_URL=your_supabase_postgres_connection_string
+   heroku config:set GOOGLE_MAPS_API_KEY=your_api_key_here
+   ```
+
+5. **Deploy:**
+   ```bash
+   git push heroku main
+   ```
+
+> **Note:** Heroku requires a `requirements.txt` at the root of the deployed directory. If deploying only the `server/` subdirectory, use a Heroku buildpack or a root-level `requirements.txt` that points to your server dependencies.
+
+---
+
+
+
+### Trips
 
 | Method | Path | Description |
 |--------|------|-------------|
@@ -84,7 +203,33 @@ trip-mapping/
 | POST | `/api/trips` | Create a trip |
 | PUT | `/api/trips/:id` | Rename a trip |
 | DELETE | `/api/trips/:id` | Delete trip + its places |
+
+### Places
+
+| Method | Path | Description |
+|--------|------|-------------|
 | GET | `/api/trips/:tripId/places` | List places for a trip |
 | POST | `/api/trips/:tripId/places` | Add a place |
 | PUT | `/api/places/:id` | Update place (notes, day group) |
 | DELETE | `/api/places/:id` | Remove a place |
+
+### Sharing *(Phase 1 — planned)*
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/api/trips/:id/share` | Generate a read-only share token |
+| GET | `/api/share/:token` | Fetch a shared trip (no auth required) |
+
+### Social *(Phase 2 — planned)*
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/api/trips/:id/fork` | Fork a public trip to your account |
+| GET | `/api/feed` | Get social feed for authenticated user |
+| GET | `/api/users/:id` | Get a user's public profile + trips |
+| POST | `/api/users/:id/follow` | Follow a user |
+| DELETE | `/api/users/:id/follow` | Unfollow a user |
+| GET | `/api/trips/:id/comments` | List comments on a trip |
+| POST | `/api/trips/:id/comments` | Add a comment |
+| DELETE | `/api/comments/:id` | Delete a comment |
+| GET | `/api/discover` | Browse public trips with filters |
