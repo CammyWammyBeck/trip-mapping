@@ -1,4 +1,5 @@
-import type { Trip, Place } from '../../types';
+import type { Trip, Place, DayDensity } from '../../types';
+import type { DayWarning } from '../../hooks/useDayWarnings';
 import { TripSelector } from './TripSelector';
 import { PlaceSearch } from './PlaceSearch';
 import { PlaceList } from './PlaceList';
@@ -13,9 +14,11 @@ interface Props {
   places: Place[];
   highlightedPlaceId: number | null;
   onAddPlace: (data: { name: string; address: string; lat: number; lng: number; place_id: string }) => void;
-  onUpdatePlace: (id: number, data: { notes?: string; day_group?: string }) => void;
+  onUpdatePlace: (id: number, data: { notes?: string; day_group?: string; sort_order?: number }) => void;
   onDeletePlace: (id: number) => void;
   onPlaceClick: (place: Place) => void;
+  dayDensities?: Map<string, DayDensity>;
+  dayWarnings?: Map<string, DayWarning>;
 }
 
 export function Sidebar({
@@ -30,6 +33,8 @@ export function Sidebar({
   onUpdatePlace,
   onDeletePlace,
   onPlaceClick,
+  dayDensities,
+  dayWarnings,
 }: Props) {
   return (
     <div className={styles.sidebar}>
@@ -51,6 +56,8 @@ export function Sidebar({
           onUpdate={onUpdatePlace}
           onDelete={onDeletePlace}
           onPlaceClick={onPlaceClick}
+          dayDensities={dayDensities}
+          dayWarnings={dayWarnings}
         />
       </div>
     </div>

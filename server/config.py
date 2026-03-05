@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     supabase_url: str = ""
     supabase_service_key: str = ""
     google_maps_api_key: str = ""
+    allowed_origins: str = "http://localhost:5173"
 
     model_config = {"env_file": ".env"}
 
