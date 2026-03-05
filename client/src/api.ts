@@ -1,4 +1,4 @@
-import type { Trip, Place } from './types';
+import type { Trip, Place, SharedTrip, TripDensityResponse } from './types';
 
 const BASE = '/api';
 
@@ -20,6 +20,16 @@ export const tripsApi = {
   create: (name: string) => request<Trip>('/trips', { method: 'POST', body: JSON.stringify({ name }) }),
   update: (id: number, name: string) => request<Trip>(`/trips/${id}`, { method: 'PUT', body: JSON.stringify({ name }) }),
   remove: (id: number) => request<void>(`/trips/${id}`, { method: 'DELETE' }),
+};
+
+export const shareApi = {
+  generateToken: (tripId: number) =>
+    request<{ share_token: string }>(`/trips/${tripId}/share`, { method: 'POST' }),
+  getSharedTrip: (token: string) => request<SharedTrip>(`/share/${token}`),
+};
+
+export const densityApi = {
+  get: (tripId: number) => request<TripDensityResponse>(`/trips/${tripId}/density`),
 };
 
 export const placesApi = {

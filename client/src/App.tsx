@@ -2,15 +2,35 @@ import { useState, useCallback } from 'react';
 import { APIProvider } from '@vis.gl/react-google-maps';
 import { useTrips } from './hooks/useTrips';
 import { usePlaces } from './hooks/usePlaces';
+import { useDensity } from './hooks/useDensity';
+import { useDayWarnings } from './hooks/useDayWarnings';
 import { Sidebar } from './components/Sidebar/Sidebar';
 import { MapView } from './components/Map/MapView';
+import { SharedTripView } from './components/SharedTripView';
 import type { Place } from './types';
 
 const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
 
+function getShareToken(): string | null {
+  const match = window.location.pathname.match(/^\/shared\/([a-f0-9]+)$/);
+  return match ? match[1] : null;
+}
+
 function App() {
+  const shareToken = getShareToken();
+
+  if (shareToken) {
+    return <SharedTripView token={shareToken} />;
+  }
+
+  return <TripPlanner />;
+}
+
+function TripPlanner() {
   const { trips, selectedTripId, setSelectedTripId, createTrip, deleteTrip } = useTrips();
   const { places, addPlace, updatePlace, removePlace } = usePlaces(selectedTripId);
+  const dayDensities = useDensity(selectedTripId, places.length);
+  const dayWarnings = useDayWarnings(places);
   const [highlightedPlaceId, setHighlightedPlaceId] = useState<number | null>(null);
 
   const handlePlaceClick = useCallback((place: Place) => {
@@ -55,6 +75,8 @@ function App() {
           onUpdatePlace={updatePlace}
           onDeletePlace={removePlace}
           onPlaceClick={handlePlaceClick}
+          dayDensities={dayDensities}
+          dayWarnings={dayWarnings}
         />
         <MapView
           places={places}

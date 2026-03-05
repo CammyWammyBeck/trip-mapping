@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { Trip } from '../../types';
+import { ShareButton } from './ShareButton';
 
 interface Props {
   trips: Trip[];
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export function TripSelector({ trips, selectedTripId, onSelect, onCreate, onDelete }: Props) {
+  const selectedTrip = trips.find((t) => t.id === selectedTripId);
   const [isCreating, setIsCreating] = useState(false);
   const [newName, setNewName] = useState('');
 
@@ -60,26 +62,32 @@ export function TripSelector({ trips, selectedTripId, onSelect, onCreate, onDele
           +
         </button>
         {selectedTripId != null && (
-          <button
-            onClick={() => {
-              if (confirm('Delete this trip and all its places?')) {
-                onDelete(selectedTripId);
-              }
-            }}
-            title="Delete trip"
-            style={{
-              padding: '8px 12px',
-              borderRadius: 6,
-              border: '1px solid #d0d0d0',
-              background: '#ea4335',
-              color: '#fff',
-              cursor: 'pointer',
-              fontSize: 14,
-              fontWeight: 600,
-            }}
-          >
-            &times;
-          </button>
+          <>
+            <ShareButton
+              tripId={selectedTripId}
+              existingToken={selectedTrip?.share_token ?? null}
+            />
+            <button
+              onClick={() => {
+                if (confirm('Delete this trip and all its places?')) {
+                  onDelete(selectedTripId);
+                }
+              }}
+              title="Delete trip"
+              style={{
+                padding: '8px 12px',
+                borderRadius: 6,
+                border: '1px solid #d0d0d0',
+                background: '#ea4335',
+                color: '#fff',
+                cursor: 'pointer',
+                fontSize: 14,
+                fontWeight: 600,
+              }}
+            >
+              &times;
+            </button>
+          </>
         )}
       </div>
       {isCreating && (
